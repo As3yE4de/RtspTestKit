@@ -57,8 +57,6 @@ $ sudo python rtsp_tk.py --help
 
 ## Modules
 
----
-
 ### enum
 
 A fast, multi-threaded RTSP path enumerator for authorized security testing.
