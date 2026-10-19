@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Module brute
+
+- Multi-threaded brute-forcing
+- Built-in default wordlists, or supply your own (--user-file and --pass-file)
+- Support RTSP over TLS (--tls)
+- Output - console and TSV file (--output)
+
+### Changed
+
+- Restyled console output for INFO, SUCCESS, WARNING, and FAILED messages
+
 ## [0.1.0] - 2026-10-18
 
 ### Added
@@ -28,4 +41,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Intuitive display: Detailed real-time logs (number of RTP packets, RTCP packets, filtered packets, dropped packets).
 - Only support RTSP currently.
 
+[unreleased]: https://github.com/As3yE4de/RtspTestKit/compare/v0.1.0...release/0.2.0
 [0.1.0]: https://github.com/As3yE4de/RtspTestKit/releases/tag/v0.1.0
