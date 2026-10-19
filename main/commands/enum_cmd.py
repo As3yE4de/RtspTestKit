@@ -45,36 +45,29 @@ def run(args) -> int:
     Execute the enum subcommand.
     """
     if args.threads < 1:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}--threads must be >= 1")
+        print(f"{u.Retro.FAILED}--threads must be >= 1{u.Retro.RESET}")
         return 2
 
     if args.timeout <= 0:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}--timeout must be > 0")
+        print(f"{u.Retro.FAILED}--timeout must be > 0{u.Retro.RESET}")
         return 2
 
     if args.delay < 0:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}--delay must be >= 0")
+        print(f"{u.Retro.FAILED}--delay must be >= 0{u.Retro.RESET}")
         return 2
 
     if args.username is not None:
         if args.password is None:
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Password is not provided.")
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Attempt to log in with blank password.")
+            print(f"{u.Retro.WARNING}Password is not provided{u.Retro.RESET}")
+            print(f"{u.Retro.WARNING}Attempt to log in with blank password{u.Retro.RESET}")
             args.password = ""
         if args.method != "DESCRIBE":
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Auth mode forces method to DESCRIBE "
-                  f"(was: {args.method}).")
+            print(f"{u.Retro.WARNING}Auth mode forces method to DESCRIBE "
+                  f"(was: {args.method}){u.Retro.RESET}")
         args.method = "DESCRIBE"
 
     if args.username is None and args.password is not None:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Must provide username along with password.")
+        print(f"{u.Retro.FAILED}Must provide username along with password{u.Retro.RESET}")
         return 1
 
     if args.no_color:
@@ -86,22 +79,18 @@ def run(args) -> int:
     try:
         raw_paths = w_handler.load_url_pathlist(args.wordlist)
     except OSError as e:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Cannot read wordlist: {e}")
+        print(f"{u.Retro.FAILED}Cannot read wordlist: {e}{u.Retro.RESET}")
         return 1
 
     if not raw_paths:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Wordlist is empty.")
+        print(f"{u.Retro.FAILED}Wordlist is empty{u.Retro.RESET}")
         return 1
 
     normalized_paths = w_handler.dedupe_url_paths(raw_paths)
 
-    divider_w = random.randint(60, 100)
-
     u.print_banner(f"{cf.DEFAULT_BANNER}", typing=True, subtitle=cf.SUBTITLE)
     print(u.colorize(f"SETTINGS RECEIVED".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     print(f"  {'Target':<11}: {u.colorize(args.target + ':' + str(args.port), u.Retro.NEON_GREEN)}")
     print(f"  {'Method':<11}: {u.colorize(args.method, u.Retro.NEON_GREEN)}")
@@ -114,12 +103,12 @@ def run(args) -> int:
     print(f"  {'Password':<11}: {u.colorize(args.password, u.Retro.NEON_GREEN)}")
     print()
 
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     header = (f"{'METHOD':<9} {'PATH':<75} {'SYMBOL':<15} "
               f"{'STATUS':<6} {'TIME':>10} {'NOTE'}")
     print(u.colorize(header, u.Retro.HOT_PINK + u.Retro.BOLD))
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     result_queue, threads = workers.start_probe(
         normalized_paths, host=args.target, port=args.port,
@@ -134,8 +123,7 @@ def run(args) -> int:
             out_fh = open(args.output, "w", encoding="utf-8")
             out_fh.write("method\tpath\tstatus\ttime\treason\terror\n")
         except OSError as e:
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Cannot open output file: {e}")
+            print(f"{u.Retro.FAILED}Cannot open output file: {e}{u.Retro.RESET}")
             return 1
 
     st = rp.Stats()
@@ -156,8 +144,7 @@ def run(args) -> int:
                 rp.write_result(out_fh, result)
     except KeyboardInterrupt:
         interrupted = True
-        print(f"\n{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Stopped by Ctrl+C. Waiting for workers...")
+        print(f"\n{u.Retro.WARNING}Stopped by Ctrl+C. Waiting for workers...{u.Retro.RESET}")
     finally:
         if out_fh:
             out_fh.close()
@@ -166,10 +153,10 @@ def run(args) -> int:
         for t in threads:
             t.join(timeout=0.5)
 
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     print(u.colorize(f"SUMMARY".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     print(st.summary())
     return 130 if interrupted else 0

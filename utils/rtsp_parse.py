@@ -5,7 +5,8 @@ __all__ = [
     "parse_transport",
     "is_setup",
     "is_describe_response_with_sdp",
-    "extract_sdp"
+    "extract_sdp",
+    "create_url"
 ]
 
 
@@ -77,3 +78,34 @@ def extract_sdp(payload: bytes) -> str | None:
     if "m=video" in sdp or "m=audio" in sdp:
         return sdp
     return None
+
+def create_url(host: str, port: int, path: str, is_tls: bool = False) -> str:
+    """
+    Create a complete RTSP/RTSPS URL from the following components:
+
+    Args:
+        host: IP address or hostname of the RTSP server
+        port: RTSP port
+        path: Path on the server (must start with '/')
+        is_tls: True -> rtsps, False -> rtsp
+
+    Returns:
+        URL in the format `rtsp://host:port/path` or `rtsps://host:port/path`.
+
+    Raises:
+        ValueError: if host is empty, port is out of range, or path is invalid.
+    """
+    if not host or not host.strip():
+        raise ValueError("host must not be empty")
+
+    if not (1 <= port <= 65535):
+        raise ValueError(f"port out of range: {port}")
+
+    if not path or not path.strip():
+        raise ValueError("path must not be empty")
+
+    if not path.startswith("/"):
+        raise ValueError(f"path must start with '/': {path!r}")
+
+    scheme = "rtsps" if is_tls else "rtsp"
+    return f"{scheme}://{host.strip()}:{port}{path.strip()}"

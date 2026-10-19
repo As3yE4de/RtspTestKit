@@ -8,11 +8,11 @@ AUTHOR = __author__
 VERSION = __version__
 GITHUB = "https://github.com/As3yE4de"
 SUBTITLE = (
-    f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}] "
+    f"{Retro.HOT_PINK}[{Retro.NEON_BLUE}INFO{Retro.HOT_PINK}] "
     f"{Retro.CYAN}Author  : {Retro.HOT_PINK}{AUTHOR}{Retro.RESET}\n"
-    f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}] "
+    f"{Retro.HOT_PINK}[{Retro.NEON_BLUE}INFO{Retro.HOT_PINK}] "
     f"{Retro.CYAN}Version : {Retro.HOT_PINK}{VERSION}{Retro.RESET}\n"
-    f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}] "
+    f"{Retro.HOT_PINK}[{Retro.NEON_BLUE}INFO{Retro.HOT_PINK}] "
     f"{Retro.CYAN}Github  : {Retro.HOT_PINK}{GITHUB}{Retro.RESET}"
 )
 

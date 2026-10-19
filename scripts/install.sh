@@ -109,8 +109,4 @@ ok "iptables scripts found and executable"
 echo
 ok "Installation complete. Ready to use."
 echo
-info "Usage:"
-# SỬA LẠI CÂU LỆNH CHẠY CHO ĐÚNG VỚI ENTRY POINT MỚI
-echo -e "  ${CYAN}sudo python3 rtsp_tk.py relay -i <iface> -s <server_ip> -c <client_ip> [options]${RESET}"
-echo
-info "Remember to run ARP spoofing externally before starting RtspRelay."
+info "Remember to run ARP spoofing externally before starting module relay."
