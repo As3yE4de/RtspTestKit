@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support RTSP over TLS (--tls)
 - Output - console and TSV file (--output)
 
+#### Module scan
+
+
+- Multi-threaded scanning for RTSP port
+
 ### Changed
 
 - Restyled console output for INFO, SUCCESS, WARNING, and FAILED messages
