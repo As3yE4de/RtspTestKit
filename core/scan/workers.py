@@ -6,7 +6,7 @@ from queue import Queue
 
 from core.scan import config as cf
 from utils.rtsp_parse import create_url
-
+from utils.net import make_ssl_context
 
 def _build_rtsp_request(method: str, url: str = "/", cseq: int = 1, user_agent: str = "Lavf62.12.102", session: str | None = None,
                         placeholder_session: str | None = None) -> bytes:
@@ -113,6 +113,44 @@ def _build_rtsp_request(method: str, url: str = "/", cseq: int = 1, user_agent: 
 
     return request.encode("utf-8", errors="replace")
 
+def _is_rtsps_port(host: str, port: int, method: str, timeout: float) -> bool:
+    """
+    Send RTSP request to confirm RTSP over TLS port.
+
+    Args:
+        host: IP/hostname of the target
+        port: Target port
+        method: RTSP method to use
+        timeout: Maximum waiting time for each request
+
+    Returns:
+        True if the port is RTSPS port; otherwise, returns False
+    """
+    url = create_url(host, port, "/")
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((host, port))
+
+            req = _build_rtsp_request(method, url)
+            ctx = make_ssl_context()
+
+            try:
+                sock = ctx.wrap_socket(s, server_hostname=host)
+            except ssl.SSLError:
+                sock.close()
+                return False
+
+            sock.sendall(req)
+            response = sock.recv(1024).decode('utf-8', errors='ignore')
+
+            if response.startswith("RTSP/"):
+                return True
+    except Exception as e:
+        print(f"{e}")
+        pass
+    return False
 
 def _is_rtsp_port(host: str, port: int, method: str, timeout: float) -> bool:
     """
@@ -170,6 +208,8 @@ def _check_port(host: str, port: int, method: str, timeout: float, delay: float)
             if s.connect_ex((host, port)) == 0:
                 if _is_rtsp_port(host, port, method, timeout):
                     return (host, port, "open", "RTSP")
+                elif _is_rtsps_port(host, port, method, timeout):
+                    return (host, port, "open", "RTSPS")
                 else:
                     return (host, port, "open", "Unknown")
     except Exception:

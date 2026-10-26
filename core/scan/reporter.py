@@ -57,7 +57,7 @@ def report_scan_results(results: list[tuple], targets: list[str], output_file: s
         for j, (host, port, state, service) in enumerate(target_ports):
             is_last_port = (j == len(target_ports) - 1)
             port_prefix = "└── " if is_last_port else "├── "
-            svc_color = u.Retro.NEON_GREEN if service == "RTSP" else u.Retro.NEON_YELLOW
+            svc_color = u.Retro.NEON_GREEN if service == "RTSP" or service == "RTSPS" else u.Retro.NEON_YELLOW
             print(f"{indent}{port_prefix}{port:<6} {svc_color}[{service}]{u.Retro.RESET} - {state}")
             lines_to_save.append(f"{host}\t{port}\t{state}\t{service}")
 

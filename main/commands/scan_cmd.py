@@ -69,9 +69,9 @@ def run(args) -> int:
     try:
         ports = []
 
-        if port_input == 'full':
+        if args.port == 'full':
             ports = list(range(1, 65536))
-        elif port_input == 'common':
+        elif args.port == 'common':
             ports = cf.COMMON_RTSP_PORTS
         else:
             ports = parse_ports(args.port)
