@@ -8,3 +8,4 @@ def dispatch(subparsers) -> None:
     enum_cmd.register(subparsers)
     relay_cmd.register(subparsers)
     brute_cmd.register(subparsers)
+    scan_cmd.register(subparsers)

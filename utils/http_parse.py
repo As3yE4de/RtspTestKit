@@ -23,7 +23,10 @@ def parse_status_line(data: bytes) -> tuple[int | None, str]:
     first = data.split(b"\r\n", 1)[0].decode("utf-8", errors="replace")
 
     parts = first.split(" ", 2)
-    if len(parts) < 2:
+    if len(parts) != 3:
+        return None, ""
+
+    if not parts[0].startswith("HTTP/"):
         return None, ""
 
     try:

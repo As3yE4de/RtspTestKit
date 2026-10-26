@@ -1,6 +1,8 @@
 from queue import Empty
 import argparse
 import random
+import time
+import os
 
 from core.bruteforce import config as cf
 from core.bruteforce import workers
@@ -8,6 +10,12 @@ from utils import tui as u
 from utils import file as f
 from utils.rtsp_parse import create_url
 
+
+def _clear_screen() -> None:
+    """
+    Cleaning screen
+    """
+    os.system("cls" if os.name == "nt" else "clear")
 
 def register(subparsers) -> None:
     """
@@ -108,6 +116,9 @@ def run(args) -> int:
 
     if args.port is None:
         args.port = cf.DEFAULT_RTSPS_PORT if args.tls else cf.DEFAULT_RTSP_PORT
+
+    time.sleep(2)
+    _clear_screen()
 
     u.print_banner(f"{cf.DEFAULT_BANNER}", typing=True, subtitle=cf.SUBTITLE)
     print(u.colorize(f"SETTINGS RECEIVED".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))

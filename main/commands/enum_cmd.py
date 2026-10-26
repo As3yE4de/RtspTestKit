@@ -1,3 +1,8 @@
+import argparse
+import random
+import time
+import os
+
 from queue import Empty
 from core.enumerator import config as cf
 from core.enumerator import workers
@@ -5,9 +10,12 @@ from core.enumerator import wordlist_handler as w_handler
 from core.enumerator import reporter as rp
 from utils import tui as u
 
-import argparse
-import random
 
+def _clear_screen() -> None:
+    """
+    Cleaning screen
+    """
+    os.system("cls" if os.name == "nt" else "clear")
 
 def register(subparsers) -> None:
     """
@@ -88,6 +96,9 @@ def run(args) -> int:
 
     normalized_paths = w_handler.dedupe_url_paths(raw_paths)
 
+    time.sleep(2)
+    _clear_screen()
+
     u.print_banner(f"{cf.DEFAULT_BANNER}", typing=True, subtitle=cf.SUBTITLE)
     print(u.colorize(f"SETTINGS RECEIVED".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))
     u.print_retro_divider(random.randint(60, 100))
@@ -98,6 +109,7 @@ def run(args) -> int:
     print(f"  {'Paths':<11}: {u.colorize(str(len(normalized_paths)) + ' (duplicates removed)', u.Retro.NEON_GREEN)}")
     print(f"  {'Threads':<11}: {u.colorize(str(args.threads), u.Retro.NEON_GREEN)}")
     print(f"  {'Delay':<11}: {u.colorize(str(args.delay) + 's', u.Retro.NEON_GREEN)}")
+    print(f"  {'Timeout':<11}: {u.colorize(str(args.timeout) + 's', u.Retro.NEON_GREEN)}")
     print(f"  {'Found only':<11}: {u.colorize(str(args.found_only), u.Retro.NEON_GREEN)}")
     print(f"  {'Username':<11}: {u.colorize(str(args.username), u.Retro.NEON_GREEN)}")
     print(f"  {'Password':<11}: {u.colorize(args.password, u.Retro.NEON_GREEN)}")

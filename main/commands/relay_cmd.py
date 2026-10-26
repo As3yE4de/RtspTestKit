@@ -1,11 +1,19 @@
 import argparse
 import random
 import sys
+import time
+import os
 
 from core.relay import config as cf
 from core.relay.orchestrator import RtspTap
 from utils import tui as u
 
+
+def _clear_screen() -> None:
+    """
+    Cleaning screen
+    """
+    os.system("cls" if os.name == "nt" else "clear")
 
 def register(subparsers) -> None:
     """
@@ -26,6 +34,9 @@ def run(args) -> int:
     """
     if args.no_color:
         u.set_color_enabled(False)
+
+    time.sleep(2)
+    _clear_screen()
 
     u.print_banner(f"{cf.DEFAULT_BANNER}", typing=True, subtitle=cf.SUBTITLE)
     print(u.colorize(f"SETTINGS RECEIVED".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))

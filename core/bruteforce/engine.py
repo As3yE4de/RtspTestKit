@@ -9,7 +9,7 @@ from utils.auth import (
     find_auth_scheme,
     parse_digest_challenge,
 )
-from utils.http_parse import parse_status_line
+from utils.rtsp_parse import parse_status_line
 from utils.net import make_ssl_context, recv_until_headers
 
 

@@ -3,6 +3,7 @@ import re
 
 __all__ = [
     "parse_transport",
+    "parse_status_line",
     "is_setup",
     "is_describe_response_with_sdp",
     "extract_sdp",
@@ -31,6 +32,37 @@ def parse_transport(payload: bytes) -> tuple[str | None, int | None, int | None]
         return ("tcp", int(m.group(1)), int(m.group(2)))
     return (None, None, None)
 
+def parse_status_line(data: bytes) -> tuple[int | None, str]:
+    """
+    Parse response to get the status code and the reason phrase.
+
+    Args:
+        data: Response in bytes
+
+    Returns:
+        (status_code, reason_phrase)
+        - Success: (200, "OK")
+        - Failed: (None, "")
+    """
+    if not data:
+        return None, ""
+
+    first = data.split(b"\r\n", 1)[0].decode("utf-8", errors="replace")
+
+    parts = first.split(" ", 2)
+    if len(parts) != 3:
+        return None, ""
+
+    if not parts[0].startswith("RTSP/"):
+        return None, ""
+
+    try:
+        code = int(parts[1])
+    except ValueError:
+        return None, ""
+
+    reason = parts[2] if len(parts) > 2 else ""
+    return code, reason
 
 def is_setup(payload: bytes) -> bool:
     """

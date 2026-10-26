@@ -36,8 +36,8 @@ class Retro:
     ]
 
 Retro.INFO = f"{Retro.HOT_PINK}[{Retro.NEON_BLUE}INFO{Retro.HOT_PINK}]{Retro.CYAN} "
-Retro.SUCCESS = f"{Retro.HOT_PINK}[{Retro.NEON_GREEN}SUCCESS{Retro.HOT_PINK}]{Retro.NEON_GREEN} "
-Retro.FAILED = f"{Retro.HOT_PINK}[{Retro.NEON_RED}FAILED{Retro.HOT_PINK}]{Retro.NEON_RED} "
+Retro.SUCCESS = f"{Retro.HOT_PINK}[{Retro.NEON_GREEN}{Retro.BOLD}SUCCESS{Retro.HOT_PINK}]{Retro.NEON_GREEN} "
+Retro.FAILED = f"{Retro.HOT_PINK}[{Retro.NEON_RED}{Retro.BOLD}FAILED{Retro.HOT_PINK}]{Retro.NEON_RED} "
 Retro.WARNING = f"{Retro.HOT_PINK}[{Retro.NEON_YELLOW}WARNING{Retro.HOT_PINK}]{Retro.NEON_YELLOW} "
 
 def _visible_len(text: str) -> int:
