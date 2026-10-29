@@ -7,23 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-29
+
 ### Added
 
 #### Module brute
 
-- Multi-threaded brute-forcing
-- Built-in default wordlists, or supply your own (--user-file and --pass-file)
-- Support RTSP over TLS (--tls)
-- Output - console and TSV file (--output)
+- Multi-threaded brute-forcing with custom timeout and delay.
+- RTSP over TLS (RTSPS) port is supported.
+- Output can be saved to TSV file or display directly on the console.
+- Credentials can be supplied as a single credential or can be supplied via wordlists.
 
 #### Module scan
 
+- Multi-threaded scanning with custom timeout and delay.
+- RTSP over TLS (RTSPS) port is supported.
+- Output can be saved to TSV file or display directly on the console.
 
-- Multi-threaded scanning for RTSP port
+### Removed
 
-### Changed
-
-- Restyled console output for INFO, SUCCESS, WARNING, and FAILED messages
+- Remove option `--no-color` of all modules.
 
 ## [0.1.0] - 2026-10-18
 
@@ -46,5 +49,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Intuitive display: Detailed real-time logs (number of RTP packets, RTCP packets, filtered packets, dropped packets).
 - Only support RTSP currently.
 
-[unreleased]: https://github.com/As3yE4de/RtspTestKit/compare/v0.1.0...release/0.2.0
+[0.2.0]: https://github.com/As3yE4de/RtspTestKit/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/As3yE4de/RtspTestKit/releases/tag/v0.1.0
