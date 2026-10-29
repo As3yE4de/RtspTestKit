@@ -79,8 +79,6 @@ $ rtsp_tk --help
 
 ## Modules
 
----
-
 ### enum
 
 This module probes IP cameras and RTSP servers for common stream paths,
