@@ -1,6 +1,5 @@
 from __future__ import annotations
 from urllib.parse import urlparse
-from utils.file import load_lines
 
 
 def load_url_pathlist(path: str) -> list[str]:

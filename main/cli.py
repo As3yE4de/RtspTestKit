@@ -1,5 +1,5 @@
 from version import __version__
-from main.commands import dispatch, enum_cmd, relay_cmd
+from main.commands import dispatch, enum_cmd, relay_cmd, brute_cmd, scan_cmd
 
 import argparse
 
@@ -31,6 +31,10 @@ def main(argv=None) -> int:
         return enum_cmd.run(args)
     if args.command == "relay":
         return relay_cmd.run(args)
+    if args.command == "brute":
+        return brute_cmd.run(args)
+    if args.command == "scan":
+        return scan_cmd.run(args)
 
     parser.print_help()
     return 2

@@ -3,9 +3,11 @@ import re
 
 __all__ = [
     "parse_transport",
+    "parse_status_line",
     "is_setup",
     "is_describe_response_with_sdp",
-    "extract_sdp"
+    "extract_sdp",
+    "create_url"
 ]
 
 
@@ -30,6 +32,37 @@ def parse_transport(payload: bytes) -> tuple[str | None, int | None, int | None]
         return ("tcp", int(m.group(1)), int(m.group(2)))
     return (None, None, None)
 
+def parse_status_line(data: bytes) -> tuple[int | None, str]:
+    """
+    Parse response to get the status code and the reason phrase.
+
+    Args:
+        data: Response in bytes
+
+    Returns:
+        (status_code, reason_phrase)
+        - Success: (200, "OK")
+        - Failed: (None, "")
+    """
+    if not data:
+        return None, ""
+
+    first = data.split(b"\r\n", 1)[0].decode("utf-8", errors="replace")
+
+    parts = first.split(" ", 2)
+    if len(parts) != 3:
+        return None, ""
+
+    if not parts[0].startswith("RTSP/"):
+        return None, ""
+
+    try:
+        code = int(parts[1])
+    except ValueError:
+        return None, ""
+
+    reason = parts[2] if len(parts) > 2 else ""
+    return code, reason
 
 def is_setup(payload: bytes) -> bool:
     """
@@ -77,3 +110,34 @@ def extract_sdp(payload: bytes) -> str | None:
     if "m=video" in sdp or "m=audio" in sdp:
         return sdp
     return None
+
+def create_url(host: str, port: int, path: str, is_tls: bool = False) -> str:
+    """
+    Create a complete RTSP/RTSPS URL from the following components:
+
+    Args:
+        host: IP address or hostname of the RTSP server
+        port: RTSP port
+        path: Path on the server (must start with '/')
+        is_tls: True -> rtsps, False -> rtsp
+
+    Returns:
+        URL in the format `rtsp://host:port/path` or `rtsps://host:port/path`.
+
+    Raises:
+        ValueError: if host is empty, port is out of range, or path is invalid.
+    """
+    if not host or not host.strip():
+        raise ValueError("host must not be empty")
+
+    if not (1 <= port <= 65535):
+        raise ValueError(f"port out of range: {port}")
+
+    if not path or not path.strip():
+        raise ValueError("path must not be empty")
+
+    if not path.startswith("/"):
+        raise ValueError(f"path must start with '/': {path!r}")
+
+    scheme = "rtsps" if is_tls else "rtsp"
+    return f"{scheme}://{host.strip()}:{port}{path.strip()}"

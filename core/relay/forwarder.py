@@ -155,20 +155,20 @@ class Forwarder:
             except Exception as e:
                 self.stats.incr("dropped")
                 if self.stats.dropped <= 5:
-                    print(f"{Retro.DEEP_PURP}[{Retro.NEON_RED}FAILED{Retro.DEEP_PURP}]{Retro.NEON_RED} {type(e).__name__}: {e}", flush=True)
+                    print(f"{Retro.FAILED}{type(e).__name__}: {e}", flush=True)
 
             now = time.time()
             if now - self._last_log > LOG_INTERVAL:
                 snap = self.stats.snapshot()
                 print(
-                    f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} "
+                    f"{Retro.INFO}"
                     f"Fwd={snap['forwarded']} RTP={snap['rtp']} RTCP={snap['rtcp']} "
                     f"Filtered={snap['filtered']} Drop={snap['dropped']} "
                     f"Q={self.queue.qsize()}{Retro.RESET}"
                 )
 
                 self._log_lines.append(
-                    f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} "
+                    f"{Retro.INFO}"
                     f"Fwd={snap['forwarded']} RTP={snap['rtp']} RTCP={snap['rtcp']} "
                     f"Filtered={snap['filtered']} Drop={snap['dropped']} "
                     f"Q={self.queue.qsize()}{Retro.RESET}"

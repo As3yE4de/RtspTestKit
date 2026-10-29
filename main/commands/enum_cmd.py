@@ -1,13 +1,25 @@
+import argparse
+import random
+import time
+import os
+import re
+
 from queue import Empty
 from core.enumerator import config as cf
 from core.enumerator import workers
 from core.enumerator import wordlist_handler as w_handler
 from core.enumerator import reporter as rp
 from utils import tui as u
+from utils.input_validate import *
 
-import argparse
-import random
 
+_IPV4_LIKE = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
+
+def _clear_screen() -> None:
+    """
+    Cleaning screen
+    """
+    os.system("cls" if os.name == "nt" else "clear")
 
 def register(subparsers) -> None:
     """
@@ -15,11 +27,13 @@ def register(subparsers) -> None:
     """
     parser = subparsers.add_parser("enum", help="RTSP path enumeration")
 
-    parser.add_argument("-t", "--target", required=True, help="IP or hostname of the target")
-    parser.add_argument("-p", "--port", type=int, default=None,
+    parser.add_argument("-t", "--target", required=True,
+                        help="IP or hostname of a single target")
+    parser.add_argument("-p", "--port", type=str, default=None,
                         help=f"RTSP port (Default: {cf.DEFAULT_RTSP_PORT}, "
                              f"or {cf.DEFAULT_RTSPS_PORT} with --tls)")
-    parser.add_argument("-w", "--wordlist", required=True, help="Wordlist file of RTSP paths")
+    parser.add_argument("-w", "--wordlist", type=str, default="wordlists/stream_paths.txt",
+                        help="Wordlist file of RTSP paths")
     parser.add_argument("-m", "--method", type=str.upper, default="DESCRIBE",
                         choices=["DESCRIBE", "OPTIONS", "SETUP", "PLAY", "PAUSE",
                                  "TEARDOWN", "GET_PARAMETER", "ANNOUNCE", "RECORD"],
@@ -33,7 +47,6 @@ def register(subparsers) -> None:
     parser.add_argument("--tls", action="store_true", help="Use RTSPS (TLS)")
     parser.add_argument("-o", "--output", default=None, help="Save the output to TSV file")
     parser.add_argument("-v", "--verbose", action="store_true", help="More error details")
-    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     parser.add_argument("--found-only", action="store_true",
                         help="Only print existing paths (200/401/403/454/455)")
     parser.add_argument("-U", "--username", default=None, help="Username for RTSP authentication")
@@ -44,82 +57,85 @@ def run(args) -> int:
     """
     Execute the enum subcommand.
     """
+    if _IPV4_LIKE.match(args.target) is not None:
+        if not is_a_single_ipv4(args.target):
+            print(f"{u.Retro.FAILED}Invalid target '{args.target}'{u.Retro.RESET}")
+            return 2
+    else:
+         if not is_a_single_hostname(args.target):
+            print(f"{u.Retro.FAILED}Invalid target '{args.target}'{u.Retro.RESET}")
+            return 2
+
     if args.threads < 1:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}--threads must be >= 1")
+        print(f"{u.Retro.FAILED}--threads must be >= 1{u.Retro.RESET}")
         return 2
 
     if args.timeout <= 0:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}--timeout must be > 0")
+        print(f"{u.Retro.FAILED}--timeout must be > 0{u.Retro.RESET}")
         return 2
 
     if args.delay < 0:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}--delay must be >= 0")
+        print(f"{u.Retro.FAILED}--delay must be >= 0{u.Retro.RESET}")
         return 2
 
     if args.username is not None:
         if args.password is None:
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Password is not provided.")
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Attempt to log in with blank password.")
+            print(f"{u.Retro.WARNING}Password is not provided{u.Retro.RESET}")
+            print(f"{u.Retro.WARNING}Attempt to log in with blank password{u.Retro.RESET}")
             args.password = ""
         if args.method != "DESCRIBE":
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Auth mode forces method to DESCRIBE "
-                  f"(was: {args.method}).")
+            print(f"{u.Retro.WARNING}Auth mode forces method to DESCRIBE "
+                  f"(was: {args.method}){u.Retro.RESET}")
         args.method = "DESCRIBE"
 
     if args.username is None and args.password is not None:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Must provide username along with password.")
-        return 1
-
-    if args.no_color:
-        u.COLOR_ENABLED = False
+        print(f"{u.Retro.FAILED}Must provide username along with password{u.Retro.RESET}")
+        return 2
 
     if args.port is None:
         args.port = cf.DEFAULT_RTSPS_PORT if args.tls else cf.DEFAULT_RTSP_PORT
+    elif not is_a_single_port(args.port):
+        print(f"{u.Retro.FAILED}Invalid port '{args.port}'{u.Retro.RESET}")
+        return 2
 
     try:
         raw_paths = w_handler.load_url_pathlist(args.wordlist)
     except OSError as e:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Cannot read wordlist: {e}")
+        print(f"{u.Retro.FAILED}Cannot read wordlist: {e}{u.Retro.RESET}")
         return 1
 
     if not raw_paths:
-        print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Wordlist is empty.")
+        print(f"{u.Retro.FAILED}Wordlist is empty{u.Retro.RESET}")
         return 1
 
     normalized_paths = w_handler.dedupe_url_paths(raw_paths)
 
-    divider_w = random.randint(60, 100)
+    time.sleep(2)
+    _clear_screen()
 
     u.print_banner(f"{cf.DEFAULT_BANNER}", typing=True, subtitle=cf.SUBTITLE)
     print(u.colorize(f"SETTINGS RECEIVED".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     print(f"  {'Target':<11}: {u.colorize(args.target + ':' + str(args.port), u.Retro.NEON_GREEN)}")
     print(f"  {'Method':<11}: {u.colorize(args.method, u.Retro.NEON_GREEN)}")
+    print(f"  {'Wordlist':<11}: {u.colorize(args.wordlist, u.Retro.NEON_GREEN)}")
     print(f"  {'TLS':<11}: {u.colorize(str(args.tls), u.Retro.NEON_GREEN)}")
     print(f"  {'Paths':<11}: {u.colorize(str(len(normalized_paths)) + ' (duplicates removed)', u.Retro.NEON_GREEN)}")
     print(f"  {'Threads':<11}: {u.colorize(str(args.threads), u.Retro.NEON_GREEN)}")
     print(f"  {'Delay':<11}: {u.colorize(str(args.delay) + 's', u.Retro.NEON_GREEN)}")
+    print(f"  {'Timeout':<11}: {u.colorize(str(args.timeout) + 's', u.Retro.NEON_GREEN)}")
     print(f"  {'Found only':<11}: {u.colorize(str(args.found_only), u.Retro.NEON_GREEN)}")
     print(f"  {'Username':<11}: {u.colorize(str(args.username), u.Retro.NEON_GREEN)}")
     print(f"  {'Password':<11}: {u.colorize(args.password, u.Retro.NEON_GREEN)}")
     print()
 
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     header = (f"{'METHOD':<9} {'PATH':<75} {'SYMBOL':<15} "
               f"{'STATUS':<6} {'TIME':>10} {'NOTE'}")
     print(u.colorize(header, u.Retro.HOT_PINK + u.Retro.BOLD))
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     result_queue, threads = workers.start_probe(
         normalized_paths, host=args.target, port=args.port,
@@ -134,8 +150,7 @@ def run(args) -> int:
             out_fh = open(args.output, "w", encoding="utf-8")
             out_fh.write("method\tpath\tstatus\ttime\treason\terror\n")
         except OSError as e:
-            print(f"{u.Retro.DEEP_PURP}[{u.Retro.NEON_RED}FAILED{u.Retro.DEEP_PURP}] "
-                  f"{u.Retro.CYAN}Cannot open output file: {e}")
+            print(f"{u.Retro.FAILED}Cannot open output file: {e}{u.Retro.RESET}")
             return 1
 
     st = rp.Stats()
@@ -156,8 +171,7 @@ def run(args) -> int:
                 rp.write_result(out_fh, result)
     except KeyboardInterrupt:
         interrupted = True
-        print(f"\n{u.Retro.DEEP_PURP}[{u.Retro.NEON_YELLOW}WARNING{u.Retro.DEEP_PURP}] "
-              f"{u.Retro.CYAN}Stopped by Ctrl+C. Waiting for workers...")
+        print(f"\n{u.Retro.WARNING}Stopped by Ctrl+C. Waiting for workers...{u.Retro.RESET}")
     finally:
         if out_fh:
             out_fh.close()
@@ -166,10 +180,10 @@ def run(args) -> int:
         for t in threads:
             t.join(timeout=0.5)
 
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     print(u.colorize(f"SUMMARY".center(30, " "), u.Retro.HOT_PINK + u.Retro.BOLD))
-    u.print_retro_divider(divider_w)
+    u.print_retro_divider(random.randint(60, 100))
 
     print(st.summary())
     return 130 if interrupted else 0

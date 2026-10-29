@@ -61,8 +61,7 @@ class RtspTap:
         self.rtp_ports.clear()
         self.rtcp_ports.clear()
         self.logger.log(
-            f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]"
-            f"{Retro.CYAN} Session state reset{Retro.RESET}"
+            f"{Retro.INFO}Session state reset{Retro.RESET}"
         )
 
     @staticmethod
@@ -136,8 +135,7 @@ class RtspTap:
                     self.forwarder.stats.incr("rtp")
                     if new_ssrc is not None:
                         self.logger.log(
-                            f"{Retro.DEEP_PURP}[{Retro.NEON_GREEN}SUCCESS{Retro.DEEP_PURP}]"
-                            f"{Retro.NEON_GREEN} Locked SSRC 0x{new_ssrc:08x} "
+                            f"{Retro.SUCCESS}Locked SSRC 0x{new_ssrc:08x} "
                             f"({'audio' if is_audio else 'video'}, PT={pt}){Retro.RESET}"
                         )
                 else:
@@ -176,8 +174,7 @@ class RtspTap:
                         self.rtp_ports.add(p1)
                         self.rtcp_ports.add(p2)
                 self.logger.log(
-                    f"{Retro.DEEP_PURP}[{Retro.NEON_GREEN}SUCCESS{Retro.DEEP_PURP}]"
-                    f"{Retro.NEON_GREEN} SETUP: mode={mode}, p1={p1}, p2={p2}{Retro.RESET}"
+                    f"{Retro.SUCCESS}SETUP: mode={mode}, p1={p1}, p2={p2}{Retro.RESET}"
                 )
                 if mode == "udp":
                     self.iptables.install_udp_rule(p1)
@@ -194,8 +191,7 @@ class RtspTap:
                     self.payload_types = parse_media_payload_types(sdp) or None
                     self._audio_pts = parse_audio_payload_types(sdp)
                 self.logger.log(
-                    f"{Retro.DEEP_PURP}[{Retro.NEON_GREEN}SUCCESS{Retro.DEEP_PURP}]"
-                    f"{Retro.NEON_GREEN} SDP captured "
+                    f"{Retro.SUCCESS}SDP captured "
                     f"({len(sdp)} bytes, payload types: {sorted(self.payload_types or [])})"
                     f"{Retro.RESET}"
                 )
@@ -225,8 +221,7 @@ class RtspTap:
 
                 if new_ssrc is not None:
                     self.logger.log(
-                        f"{Retro.DEEP_PURP}[{Retro.NEON_GREEN}SUCCESS{Retro.DEEP_PURP}]"
-                        f"{Retro.NEON_GREEN} Locked SSRC 0x{new_ssrc:08x} "
+                        f"{Retro.SUCCESS}Locked SSRC 0x{new_ssrc:08x} "
                         f"(PT={pt}){Retro.RESET}"
                     )
 
@@ -240,7 +235,7 @@ class RtspTap:
             0 if successfully; otherwise, returns 1.
         """
         if os.geteuid() != 0:
-            print(f"{Retro.DEEP_PURP}[{Retro.NEON_RED}FAILED{Retro.DEEP_PURP}]{Retro.NEON_RED} Root privilege required.{Retro.RESET}", file=sys.stderr)
+            print(f"{Retro.FAILED}Root privilege required.{Retro.RESET}", file=sys.stderr)
             return 1
 
         self._sysctl("net.core.rmem_max", "16777216")
@@ -251,7 +246,7 @@ class RtspTap:
 
         if not self.iptables.setup():
             for e in self.iptables.drain_errors():
-                print(f"{Retro.DEEP_PURP}[{Retro.NEON_RED}FAILED{Retro.DEEP_PURP}]{Retro.NEON_RED} {e}{Retro.RESET}", file=sys.stderr)
+                print(f"{Retro.FAILED}{e}{Retro.RESET}", file=sys.stderr)
             self._teardown()
             return 1
 
@@ -262,15 +257,15 @@ class RtspTap:
         ).start()
 
         nfq = NetfilterQueue()
-        self.logger.info(f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} NFQUEUE listening on TCP port {self.args.rtsp_port}{Retro.RESET}")
-        self.logger.info(f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} MITM: {self.args.server} <-> {self.args.client}{Retro.RESET}")
-        self.logger.info(f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} Press Ctrl+C to exit.{Retro.RESET}\n")
+        self.logger.info(f"{Retro.INFO}NFQUEUE listening on TCP port {self.args.rtsp_port}{Retro.RESET}")
+        self.logger.info(f"{Retro.INFO}MITM: {self.args.server} <-> {self.args.client}{Retro.RESET}")
+        self.logger.info(f"{Retro.INFO}Press Ctrl+C to exit.{Retro.RESET}\n")
 
         try:
             nfq.bind(QUEUE_NUM, self.process_packet)
             nfq.run()
         except KeyboardInterrupt:
-            self.logger.info(f"\n{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} Shutting down...{Retro.RESET}")
+            self.logger.info(f"\n{Retro.INFO}Shutting down...{Retro.RESET}")
         finally:
             try:
                 nfq.unbind()
@@ -296,9 +291,9 @@ class RtspTap:
 
         snap = self.forwarder.stats.snapshot()
         print(
-            f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} Stats: RTP={snap['rtp']} "
+            f"{Retro.INFO}Stats: RTP={snap['rtp']} "
             f"Forwarded={snap['forwarded']} "
             f"Filtered={snap['filtered']} "
             f"Dropped={snap['dropped']}{Retro.RESET}"
         )
-        print(f"{Retro.DEEP_PURP}[{Retro.NEON_BLUE}INFO{Retro.DEEP_PURP}]{Retro.CYAN} Cleanup complete.{Retro.RESET}")
+        print(f"{Retro.INFO}Cleanup complete.{Retro.RESET}")
