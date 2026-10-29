@@ -148,7 +148,6 @@ def _is_rtsps_port(host: str, port: int, method: str, timeout: float) -> bool:
             if response.startswith("RTSP/"):
                 return True
     except Exception as e:
-        print(f"{e}")
         pass
     return False
 
@@ -180,7 +179,6 @@ def _is_rtsp_port(host: str, port: int, method: str, timeout: float) -> bool:
             if response.startswith("RTSP/"):
                 return True
     except Exception as e:
-        print(f"{e}")
         pass
     return False
 

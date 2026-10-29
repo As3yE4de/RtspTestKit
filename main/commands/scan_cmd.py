@@ -10,6 +10,7 @@ from utils import tui as u
 from utils.net import is_host_reachable, classify_host_input
 from utils.input_validate import parse_ports
 
+
 def _clear_screen() -> None:
     """
     Cleaning screen
@@ -39,10 +40,8 @@ def register(subparsers) -> None:
     parser.add_argument("--delay", type=float, default=cf.DEFAULT_DELAY,
                         help="Delay interval between requests (Default: 0)")
     parser.add_argument("--no-ping", action="store_true",
-                        help="No sending ICMP requests sent to check reachable connections")
+                        help="No sending ICMP requests to check reachable connections")
     parser.add_argument("-o", "--output", default=None, help="Save the output to TSV file")
-    parser.add_argument("-v", "--verbose", action="store_true", help="More error details")
-    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
 
 def run(args) -> int:
     """
@@ -70,8 +69,10 @@ def run(args) -> int:
         ports = []
 
         if args.port == 'full':
+            print(f"{u.Retro.INFO}The value of --port is 'full'. Preparing to scan from port 1 to 65535{u.Retro.RESET}")
             ports = list(range(1, 65536))
         elif args.port == 'common':
+            print(f"{u.Retro.INFO}The value of --port is 'common'. Preparing to scan ports {cf.COMMON_RTSP_PORTS}{u.Retro.RESET}")
             ports = cf.COMMON_RTSP_PORTS
         else:
             ports = parse_ports(args.port)
@@ -90,9 +91,6 @@ def run(args) -> int:
     if args.delay < 0:
         print(f"{u.Retro.FAILED}--delay must be >= 0{u.Retro.RESET}")
         return 2
-
-    if args.no_color:
-        u.COLOR_ENABLED = False
 
     time.sleep(2)
     _clear_screen()

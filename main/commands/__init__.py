@@ -5,7 +5,7 @@ def dispatch(subparsers) -> None:
     """
     Register all subcommands.
     """
-    enum_cmd.register(subparsers)
-    relay_cmd.register(subparsers)
-    brute_cmd.register(subparsers)
     scan_cmd.register(subparsers)
+    enum_cmd.register(subparsers)
+    brute_cmd.register(subparsers)
+    relay_cmd.register(subparsers)

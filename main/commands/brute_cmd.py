@@ -3,12 +3,17 @@ import argparse
 import random
 import time
 import os
+import re
 
 from core.bruteforce import config as cf
 from core.bruteforce import workers
 from utils import tui as u
 from utils import file as f
 from utils.rtsp_parse import create_url
+from utils.input_validate import *
+
+
+_IPV4_LIKE = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
 
 
 def _clear_screen() -> None:
@@ -23,8 +28,8 @@ def register(subparsers) -> None:
     """
     parser = subparsers.add_parser("brute", help="Brute-forcing RTSP credentials")
 
-    parser.add_argument("-t", "--target", required=True, help="IP or hostname of the server")
-    parser.add_argument("-p", "--port", type=int, default=cf.DEFAULT_RTSP_PORT,
+    parser.add_argument("-t", "--target", required=True, help="IP or hostname of a target")
+    parser.add_argument("-p", "--port", type=str, default=None,
                         help=f"RTSP port (Default: {cf.DEFAULT_RTSP_PORT}, "
                              f"or {cf.DEFAULT_RTSPS_PORT} with --tls)")
     parser.add_argument("--path", required=True, help="Valid RTSP path on the server")
@@ -37,7 +42,6 @@ def register(subparsers) -> None:
     parser.add_argument("--tls", action="store_true", help="Use RTSPS (TLS)")
     parser.add_argument("-o", "--output", default=None, help="Save the output to TSV file")
     parser.add_argument("-v", "--verbose", action="store_true", help="More error details")
-    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     parser.add_argument("--stop-on-succeed", action="store_true", help="Stop brute-forcing when a valid credential found")
     parser.add_argument("-U", "--username", default=None, help="Username for RTSP authentication")
     parser.add_argument("--user-file", default=None, help="Wordlist of usernames for RTSP authentication")
@@ -48,12 +52,21 @@ def run(args) -> int:
     """
     Execute the brute subcommand.
     """
+    if _IPV4_LIKE.match(args.target) is not None:
+        if not is_a_single_ipv4(args.target):
+            print(f"{u.Retro.FAILED}Invalid target '{args.target}'{u.Retro.RESET}")
+            return 2
+    else:
+         if not is_a_single_hostname(args.target):
+            print(f"{u.Retro.FAILED}Invalid target '{args.target}'{u.Retro.RESET}")
+            return 2
+
     if not args.path or not args.path.strip():
         print(f"{u.Retro.FAILED}--path must not be empty{u.Retro.RESET}")
         return 2
 
     if not args.path.startswith("/"):
-        print(f"{u.Retro.FAILED}--path must start with '/'. Got: {args.path!r}{u.Retro.RESET}")
+        print(f"{u.Retro.FAILED}--path must start with '/'. Got: '{args.path!r}'{u.Retro.RESET}")
         return 2
 
     args.path = args.path.strip()
@@ -111,11 +124,11 @@ def run(args) -> int:
         print(f"{u.Retro.FAILED}No credentials provided. Use -U/-P, -U/--pass-file, --user-file/-P, or --user-file/--pass-file{u.Retro.RESET}")
         return 1
 
-    if args.no_color:
-        u.COLOR_ENABLED = False
-
     if args.port is None:
         args.port = cf.DEFAULT_RTSPS_PORT if args.tls else cf.DEFAULT_RTSP_PORT
+    elif not is_a_single_port(args.port):
+        print(f"{u.Retro.FAILED}Invalid port '{args.port}'{u.Retro.RESET}")
+        return 2
 
     time.sleep(2)
     _clear_screen()

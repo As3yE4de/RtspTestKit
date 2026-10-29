@@ -3,10 +3,15 @@ import random
 import sys
 import time
 import os
+import re
 
 from core.relay import config as cf
 from core.relay.orchestrator import RtspTap
 from utils import tui as u
+from utils.input_validate import *
+
+
+_IPV4_LIKE = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
 
 
 def _clear_screen() -> None:
@@ -20,20 +25,52 @@ def register(subparsers) -> None:
     Register the 'relay' subcommand into the given subparsers.
     """
     parser = subparsers.add_parser("relay", help="Real-time RTSP MITM Tap for stream relaying")
-    parser.add_argument("--rtsp-port", type=int, default=cf.DEFAULT_RTSP_PORT, help="Server's RTSP port")
-    parser.add_argument("--viewer-port", type=int, default=cf.DEFAULT_VIEWER_PORT, help="Port for local player to display stream")
-    parser.add_argument("-i","--iface", default=cf.DEFAULT_IFACE, help="Network interface for NFQUEUE / IP forwarding")
-    parser.add_argument("-c","--client", default=None, required=True, help="IP or hostname of RTSP client")
-    parser.add_argument("-s","--server", default=None, required=True, help="IP or hostname of RTSP server")
-    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
-    parser.add_argument("--debug", action="store_true", help="Detailed logs")
+    parser.add_argument("--rtsp-port", type=int, default=None,
+                        help=f"Server's RTSP port (Default: {cf.DEFAULT_RTSP_PORT})")
+    parser.add_argument("--viewer-port", type=int, default=None,
+                        help=f"Port for local player to display stream (Default: {cf.DEFAULT_VIEWER_PORT})")
+    parser.add_argument("-i","--iface", default=cf.DEFAULT_IFACE,
+                        help="Network interface for NFQUEUE / IP forwarding")
+    parser.add_argument("-c","--client", default=None, required=True,
+                        help="IP or hostname of RTSP client")
+    parser.add_argument("-s","--server", default=None, required=True,
+                        help="IP or hostname of RTSP server")
+    parser.add_argument("--debug", action="store_true",
+                        help="Detailed logs")
 
 def run(args) -> int:
     """
     Execute the relay subcommand (placeholder).
     """
-    if args.no_color:
-        u.set_color_enabled(False)
+    if args.rtsp_port is None:
+        args.rtsp_port = cf.DEFAULT_RTSP_PORT
+    elif not is_a_single_port(args.rtsp_port):
+        print(f"{u.Retro.FAILED}Invalid port '{args.rtsp_port}'{u.Retro.RESET}")
+        return 2
+
+    if args.viewer_port is None:
+        args.viewer_port = cf.DEFAULT_VIEWER_PORT
+    elif not is_a_single_port(args.viewer_port):
+        print(f"{u.Retro.FAILED}Invalid port '{args.viewer_port}'{u.Retro.RESET}")
+        return 2
+
+    if _IPV4_LIKE.match(args.client) is not None:
+        if not is_a_single_ipv4(args.client):
+            print(f"{u.Retro.FAILED}Invalid client '{args.client}'{u.Retro.RESET}")
+            return 2
+    else:
+         if not is_a_single_hostname(args.client):
+            print(f"{u.Retro.FAILED}Invalid client '{args.target}'{u.Retro.RESET}")
+            return 2
+
+    if _IPV4_LIKE.match(args.server) is not None:
+        if not is_a_single_ipv4(args.server):
+            print(f"{u.Retro.FAILED}Invalid server '{args.server}'{u.Retro.RESET}")
+            return 2
+    else:
+         if not is_a_single_hostname(args.target):
+            print(f"{u.Retro.FAILED}Invalid server '{args.server}'{u.Retro.RESET}")
+            return 2
 
     time.sleep(2)
     _clear_screen()

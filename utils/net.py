@@ -12,7 +12,11 @@ __all__ = [
 ]
 
 
-_HOSTNAME_LABEL = re.compile(r"^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$")
+_HOSTNAME_LABEL = re.compile(
+    r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$"
+)
+_IPV4_LIKE = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
+_HAS_LETTER = re.compile(r"[A-Za-z]")
 
 
 def _is_valid_hostname(host: str) -> bool:
@@ -29,16 +33,20 @@ def _is_valid_hostname(host: str) -> bool:
         return False
 
     name = host[:-1] if host.endswith(".") else host
-
     if not name:
         return False
+
     labels = name.split(".")
 
     if len(labels) < 2 and name.lower() != "localhost":
         return False
+
+    if not _HAS_LETTER.search(labels[-1]):
+        return False
+
     return all(_HOSTNAME_LABEL.match(lb) for lb in labels)
 
-def _is_valid_netmask(s: str) -> bool:
+def _is_valid_netmask(packed: int) -> bool:
     """
     Check if the supplied string is a valid subnetmask.
 
@@ -48,14 +56,8 @@ def _is_valid_netmask(s: str) -> bool:
     Returns:
         True if the input is a valid subnetmask; otherwise, returns False.
     """
-    try:
-        ip = ipaddress.IPv4Address(s)
-    except ValueError:
-        return False
-    packed = int(ip)
     inverted = (~packed) & 0xFFFFFFFF
     return (inverted & (inverted + 1)) == 0
-
 
 def classify_host_input(s: str) -> tuple[str, str | None]:
     """
@@ -65,7 +67,7 @@ def classify_host_input(s: str) -> tuple[str, str | None]:
         ("ipv4", None)        If the string is a valid IPv4 address (Ex: "192.168.1.1")
         ("netmask", None)     If the string is a valid netmask (Ex: "255.255.255.0")
         ("hostname", None)    If the string is a valid hostname (Ex: "example.com")
-        ("invalid", "reason") If the string is invalid 
+        ("invalid", "reason") If the string is invalid
     """
     if not isinstance(s, str):
         return "invalid", f"Data type is not string (str): {type(s).__name__}"
@@ -75,12 +77,17 @@ def classify_host_input(s: str) -> tuple[str, str | None]:
         return "invalid", "empty string"
 
     try:
-        ip = ipaddress.IPv4Address(s)
-        if _is_valid_netmask(s):
+        packed = int(ipaddress.IPv4Address(s))
+    except ValueError:
+        packed = None
+
+    if packed is not None:
+        if _is_valid_netmask(packed):
             return "netmask", None
         return "ipv4", None
-    except ValueError:
-        pass
+
+    if _IPV4_LIKE.match(s):
+        return "invalid", f"'{s}' looks like an IPv4 address but is not valid"
 
     if _is_valid_hostname(s):
         return "hostname", None

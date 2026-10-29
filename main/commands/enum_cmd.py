@@ -2,6 +2,7 @@ import argparse
 import random
 import time
 import os
+import re
 
 from queue import Empty
 from core.enumerator import config as cf
@@ -9,7 +10,10 @@ from core.enumerator import workers
 from core.enumerator import wordlist_handler as w_handler
 from core.enumerator import reporter as rp
 from utils import tui as u
+from utils.input_validate import *
 
+
+_IPV4_LIKE = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
 
 def _clear_screen() -> None:
     """
@@ -23,11 +27,13 @@ def register(subparsers) -> None:
     """
     parser = subparsers.add_parser("enum", help="RTSP path enumeration")
 
-    parser.add_argument("-t", "--target", required=True, help="IP or hostname of the target")
-    parser.add_argument("-p", "--port", type=int, default=None,
+    parser.add_argument("-t", "--target", required=True,
+                        help="IP or hostname of a single target")
+    parser.add_argument("-p", "--port", type=str, default=None,
                         help=f"RTSP port (Default: {cf.DEFAULT_RTSP_PORT}, "
                              f"or {cf.DEFAULT_RTSPS_PORT} with --tls)")
-    parser.add_argument("-w", "--wordlist", required=True, help="Wordlist file of RTSP paths")
+    parser.add_argument("-w", "--wordlist", type=str, default="wordlists/stream_paths.txt",
+                        help="Wordlist file of RTSP paths")
     parser.add_argument("-m", "--method", type=str.upper, default="DESCRIBE",
                         choices=["DESCRIBE", "OPTIONS", "SETUP", "PLAY", "PAUSE",
                                  "TEARDOWN", "GET_PARAMETER", "ANNOUNCE", "RECORD"],
@@ -41,7 +47,6 @@ def register(subparsers) -> None:
     parser.add_argument("--tls", action="store_true", help="Use RTSPS (TLS)")
     parser.add_argument("-o", "--output", default=None, help="Save the output to TSV file")
     parser.add_argument("-v", "--verbose", action="store_true", help="More error details")
-    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     parser.add_argument("--found-only", action="store_true",
                         help="Only print existing paths (200/401/403/454/455)")
     parser.add_argument("-U", "--username", default=None, help="Username for RTSP authentication")
@@ -52,6 +57,15 @@ def run(args) -> int:
     """
     Execute the enum subcommand.
     """
+    if _IPV4_LIKE.match(args.target) is not None:
+        if not is_a_single_ipv4(args.target):
+            print(f"{u.Retro.FAILED}Invalid target '{args.target}'{u.Retro.RESET}")
+            return 2
+    else:
+         if not is_a_single_hostname(args.target):
+            print(f"{u.Retro.FAILED}Invalid target '{args.target}'{u.Retro.RESET}")
+            return 2
+
     if args.threads < 1:
         print(f"{u.Retro.FAILED}--threads must be >= 1{u.Retro.RESET}")
         return 2
@@ -76,13 +90,13 @@ def run(args) -> int:
 
     if args.username is None and args.password is not None:
         print(f"{u.Retro.FAILED}Must provide username along with password{u.Retro.RESET}")
-        return 1
-
-    if args.no_color:
-        u.COLOR_ENABLED = False
+        return 2
 
     if args.port is None:
         args.port = cf.DEFAULT_RTSPS_PORT if args.tls else cf.DEFAULT_RTSP_PORT
+    elif not is_a_single_port(args.port):
+        print(f"{u.Retro.FAILED}Invalid port '{args.port}'{u.Retro.RESET}")
+        return 2
 
     try:
         raw_paths = w_handler.load_url_pathlist(args.wordlist)
@@ -105,6 +119,7 @@ def run(args) -> int:
 
     print(f"  {'Target':<11}: {u.colorize(args.target + ':' + str(args.port), u.Retro.NEON_GREEN)}")
     print(f"  {'Method':<11}: {u.colorize(args.method, u.Retro.NEON_GREEN)}")
+    print(f"  {'Wordlist':<11}: {u.colorize(args.wordlist, u.Retro.NEON_GREEN)}")
     print(f"  {'TLS':<11}: {u.colorize(str(args.tls), u.Retro.NEON_GREEN)}")
     print(f"  {'Paths':<11}: {u.colorize(str(len(normalized_paths)) + ' (duplicates removed)', u.Retro.NEON_GREEN)}")
     print(f"  {'Threads':<11}: {u.colorize(str(args.threads), u.Retro.NEON_GREEN)}")
