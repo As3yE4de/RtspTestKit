@@ -25,17 +25,17 @@ this tool. See [DISCLAIMER.md](DISCLAIMER.md) for full terms.
 
 ## Table of Contents
 
-- [[#Installation]]
-- [[#Quick Start]]
-- [[#Modules]]
-	- [[#enum]]
-	- [[#relay]]
-	- [[#brute]]
-	- [[#scan]]
-- [[#Notes]]
-- [[#Contributing]]
-- [[#License]]
-- [[#Legal]]
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Modules](#modules)
+	- [enum](#enum)
+	- [relay](#relay)
+	- [brute](#brute)
+	- [scan](#scan)
+- [Notes](#notes)
+- [Contributing](#contributing)
+- [License](#license)
+- [Legal](#legal)
 
 ---
 
